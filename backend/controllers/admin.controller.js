@@ -11,30 +11,55 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-// Update User Credits (Admin only)
-export const updateUserCredits = async (req, res) => {
+//  get all credits of user
+export const getUserCredits = async (req, res) => {
   try {
-    const { userId, credits } = req.body;
+    // Get the user ID from the authenticated user (JWT token decoded in `protect` middleware)
+    const userId = req.user._id;
 
-    if (!userId || credits === undefined) {
-      return res
-        .status(400)
-        .json({ error: "User ID and credits are required" });
-    }
-
+    // Find the user by their ID
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
+    // Return the user's credits
+    return res.status(200).json({
+      credits: user.credits,
+    });
+  } catch (error) {
+    console.error("Get User Credits Error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// Update User Credits (Admin only)
+export const updateUserCredits = async (req, res) => {
+  try {
+    const { userId } = req.params; // Use `userId` from URL params
+    const { credits } = req.body; // New credits from body
+
+    console.log("Update User Credits:", userId, credits);
+
+    // Validate input
+    if (typeof credits !== "number" || credits < 0) {
+      return res
+        .status(400)
+        .json({ error: "Credits must be a positive number." });
+    }
+
+    // Find user and update credits
+    const user = await User.findById(userId); // Use `userId` here as well
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
     user.credits = credits;
     await user.save();
 
-    return res
-      .status(200)
-      .json({ message: "Credits updated successfully", user });
+    return res.status(200).json({ message: "Credits updated successfully." });
   } catch (error) {
-    console.error("Error updating credits:", error);
+    console.error("Update Credits Error:", error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };

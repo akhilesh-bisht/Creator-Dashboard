@@ -7,6 +7,7 @@ const feedSchema = new Schema(
       type: String,
       required: true,
       unique: true,
+      index: true,
     },
     source: {
       type: String,

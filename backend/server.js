@@ -7,6 +7,7 @@ import feedRoute from "./routes/feed.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import { protect } from "./middleware/authMiddleware.js";
 import postsRoutes from "./routes/post.route.js";
+import reportRoutes from "./routes/report.route.js";
 // Load environment variables
 dotenv.config();
 
@@ -25,9 +26,10 @@ app.use("/api/auth", userRoute);
 app.use("/api/admin", protect, adminRoutes);
 //  feed routes
 app.use("/api/feed", protect, feedRoute);
-
 //  posts routes
 app.use("/api/posts", postsRoutes);
+//  report routes
+app.use("/api/report", reportRoutes);
 
 app.get("/", (req, res) => {
   res.send("Server is running with import syntax!");

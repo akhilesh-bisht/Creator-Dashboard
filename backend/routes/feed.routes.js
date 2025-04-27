@@ -4,6 +4,7 @@ import {
   getAllSavedFeeds,
   getSingleSavedFeed,
   deleteSavedFeed,
+  shareFeed,
 } from "../controllers/feed.controller.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -21,5 +22,8 @@ router.get("/saved/:postId", protect, getSingleSavedFeed);
 // Delete a saved feed by ID
 
 router.delete("/saved/:postId", protect, deleteSavedFeed);
+
+//  share feed
+router.post("/share/:feedId", shareFeed);
 
 export default router;

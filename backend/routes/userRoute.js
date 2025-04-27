@@ -3,6 +3,7 @@ import {
   loginUser,
   registerUser,
   logoutUser,
+  updateProfile,
 } from "../controllers/user.controller.js";
 
 const router = express.Router();
@@ -15,5 +16,7 @@ router.post("/login", loginUser);
 
 //  Logout User
 router.post("/logout", logoutUser);
+// update user
+router.patch("/update", updateProfile);
 
 export default router;

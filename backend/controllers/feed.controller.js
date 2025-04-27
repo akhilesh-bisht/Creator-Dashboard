@@ -1,6 +1,6 @@
+import mongoose from "mongoose";
 import { User } from "../models/user.model.js";
 import { Feed } from "../models/feed.model.js";
-
 // Save Feed
 export const saveFeed = async (req, res) => {
   try {
@@ -8,11 +8,9 @@ export const saveFeed = async (req, res) => {
     const { postId, source, title, url } = req.body;
 
     if (!postId || !source || !title || !url) {
-      return res
-        .status(400)
-        .json({
-          error: "All fields are required (postId, source, title, url)",
-        });
+      return res.status(400).json({
+        error: "All fields are required (postId, source, title, url)",
+      });
     }
 
     // Check if feed already exists
@@ -126,5 +124,44 @@ export const deleteSavedFeed = async (req, res) => {
   } catch (error) {
     console.error("Delete Saved Feed Error:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// Share Feed Controller
+export const shareFeed = async (req, res) => {
+  const { feedId } = req.params; // Get the feedId from the URL parameter
+
+  try {
+    // Check if the feedId is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(feedId)) {
+      return res.status(400).json({ error: "Invalid feedId format." });
+    }
+
+    // Find the feed in the database by feedId
+    const feed = await Feed.findById(feedId);
+
+    if (!feed) {
+      return res.status(404).json({ error: "Feed not found." });
+    }
+
+    // Generate shareable URLs for Twitter and LinkedIn
+    const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+      feed.content
+    )}&url=${encodeURIComponent(feed.url)}`;
+    const linkedInShareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+      feed.url
+    )}`;
+
+    // Respond with the generated share links
+    return res.status(200).json({
+      message: "Share links generated successfully.",
+      shareLinks: {
+        twitter: twitterShareUrl,
+        linkedin: linkedInShareUrl,
+      },
+    });
+  } catch (error) {
+    console.error("Error processing the request:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
