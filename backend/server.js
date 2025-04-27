@@ -4,6 +4,9 @@ import cors from "cors";
 import userRoute from "./routes/userRoute.js";
 import connectDB from "./config/db.js";
 import feedRoute from "./routes/feed.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
+import { protect } from "./middleware/authMiddleware.js";
+import postsRoutes from "./routes/post.route.js";
 // Load environment variables
 dotenv.config();
 
@@ -18,8 +21,13 @@ connectDB();
 
 //  authentication routes
 app.use("/api/auth", userRoute);
+//  admin routes
+app.use("/api/admin", protect, adminRoutes);
 //  feed routes
-app.use("/api/feed", feedRoute);
+app.use("/api/feed", protect, feedRoute);
+
+//  posts routes
+app.use("/api/posts", postsRoutes);
 
 app.get("/", (req, res) => {
   res.send("Server is running with import syntax!");

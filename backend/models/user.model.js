@@ -26,16 +26,13 @@ const userSchema = new Schema(
       minlength: 6,
     },
 
-    //  Extra fields for your project
+    // Extra fields for your project
     role: { type: String, enum: ["User", "Admin"], default: "User" },
     credits: { type: Number, default: 0 },
     savedFeeds: [
       {
-        postId: { type: String, required: true },
-        source: { type: String },
-        title: { type: String },
-        url: { type: String },
-        savedAt: { type: Date, default: Date.now },
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Feed", // Reference to Feed model
       },
     ],
     lastLogin: { type: Date }, // for daily login bonus

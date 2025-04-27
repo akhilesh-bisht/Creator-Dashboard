@@ -1,13 +1,15 @@
 import express from "express";
 import {
   getAllUsers,
-  getFeedActivity,
+  updateUserCredits,
+  deleteUser,
 } from "../controllers/admin.controller.js";
-import { authenticateAdmin } from "../middlewares/auth.middleware.js"; // Admin verification middleware
-
+import { isAdmin } from "../middleware/adminMiddleware.js";
 const router = express.Router();
 
-router.get("/users", authenticateAdmin, getAllUsers); // Get all users
-router.get("/feed-activity", authenticateAdmin, getFeedActivity); // Get feed activity
+// Admin routes
+router.get("/users", isAdmin, getAllUsers); // Admin can view all users
+router.put("/user/credits", isAdmin, updateUserCredits); // Admin can update user credits
+router.delete("/user/:userId", isAdmin, deleteUser); // Admin can delete user
 
 export default router;

@@ -1,44 +1,42 @@
 import { User } from "../models/user.model.js";
+import { Feed } from "../models/feed.model.js";
 
-// Save Feed Controller
+// Save Feed
 export const saveFeed = async (req, res) => {
   try {
-    const userId = req.user._id; // req.user authenticated middleware se aayega
+    const userId = req.user._id;
     const { postId, source, title, url } = req.body;
 
-    // Validate input
     if (!postId || !source || !title || !url) {
-      return res.status(400).json({
-        error: "All fields are required (postId, source, title, url)",
-      });
+      return res
+        .status(400)
+        .json({
+          error: "All fields are required (postId, source, title, url)",
+        });
+    }
+
+    // Check if feed already exists
+    let feed = await Feed.findOne({ postId });
+
+    if (!feed) {
+      feed = new Feed({ postId, source, title, url });
+      await feed.save();
     }
 
     // Find user
     const user = await User.findById(userId);
-
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
     // Check if feed already saved
-    const alreadySaved = user.savedFeeds?.some(
-      (feed) => feed.postId === postId
-    );
-
+    const alreadySaved = user.savedFeeds.includes(feed._id);
     if (alreadySaved) {
       return res.status(400).json({ error: "Feed already saved" });
     }
 
-    // Add feed to savedFeeds array
-    user.savedFeeds.push({
-      postId,
-      source,
-      title,
-      url,
-      savedAt: new Date(),
-    });
-
-    // Add credits (example: +5 credits for saving a feed)
+    // Save feed reference
+    user.savedFeeds.push(feed._id);
     user.credits += 5;
 
     await user.save();
@@ -60,75 +58,73 @@ export const saveFeed = async (req, res) => {
 // Get all saved feeds for a user
 export const getAllSavedFeeds = async (req, res) => {
   try {
-    const userId = req.user._id; // User ID from authenticated request
+    const userId = req.user._id;
 
-    // Find the user and select only savedFeeds field
-    const user = await User.findById(userId).select("savedFeeds");
+    // Populate savedFeeds with Feed details
+    const user = await User.findById(userId).populate("savedFeeds");
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Return all saved feeds
-    return res.status(200).json({ savedFeeds: user.savedFeeds });
+    res.status(200).json({ savedFeeds: user.savedFeeds });
   } catch (error) {
     console.error("Get All Saved Feeds Error:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
-// Get a specific saved feed by postId
+// Get a single saved feed by postId
 export const getSingleSavedFeed = async (req, res) => {
   try {
-    const userId = req.user._id; // User ID from authenticated request
-    const { postId } = req.params; // postId from URL parameters
+    const userId = req.user._id;
+    const { postId } = req.params;
 
-    // Find the user and select only savedFeeds field
-    const user = await User.findById(userId).select("savedFeeds");
+    const user = await User.findById(userId).populate("savedFeeds");
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Find the specific feed by postId
+    // Find the feed by matching postId
     const feed = user.savedFeeds.find((feed) => feed.postId === postId);
     if (!feed) {
       return res.status(404).json({ error: "Feed not found" });
     }
 
-    // Return the specific feed
-    return res.status(200).json({ feed });
+    res.status(200).json({ feed });
   } catch (error) {
     console.error("Get Single Saved Feed Error:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
-//  delete a saved feed
+// Delete a saved feed
 export const deleteSavedFeed = async (req, res) => {
   try {
     const userId = req.user._id;
     const { postId } = req.params;
 
-    // Find user
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).populate("savedFeeds");
     if (!user) {
-      return res.status(404).json({ error: "User not found." });
+      return res.status(404).json({ error: "User not found" });
     }
 
-    // Filter out the feed with the given postId
-    const originalLength = user.savedFeeds.length;
-    user.savedFeeds = user.savedFeeds.filter((feed) => feed.postId !== postId);
+    // Find the feed to remove
+    const feedToRemove = user.savedFeeds.find((feed) => feed.postId === postId);
 
-    if (user.savedFeeds.length === originalLength) {
+    if (!feedToRemove) {
       return res.status(404).json({ error: "Feed not found in saved feeds." });
     }
 
-    await user.save(); // Save updated user document
+    // Remove feed's ObjectId from savedFeeds
+    user.savedFeeds = user.savedFeeds.filter(
+      (feed) => feed._id.toString() !== feedToRemove._id.toString()
+    );
 
-    return res
-      .status(200)
-      .json({ message: "Saved feed deleted successfully." });
+    await user.save();
+
+    res.status(200).json({ message: "Saved feed deleted successfully." });
   } catch (error) {
     console.error("Delete Saved Feed Error:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
