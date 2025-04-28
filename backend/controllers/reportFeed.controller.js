@@ -37,18 +37,15 @@ export const getAllReportedFeeds = async (req, res) => {
 };
 
 // Delete a reported feed (Admin only)
-
 export const deleteReportedFeed = async (req, res) => {
   const { feedId } = req.params;
 
   try {
-    const feed = await Feed.findById(feedId);
+    // Use findByIdAndDelete to delete the feed directly
+    const feed = await Feed.findByIdAndDelete(feedId);
     if (!feed) {
       return res.status(404).json({ error: "Feed not found." });
     }
-
-    // Delete the feed
-    await feed.remove();
 
     return res.status(200).json({ message: "Feed deleted successfully." });
   } catch (error) {
