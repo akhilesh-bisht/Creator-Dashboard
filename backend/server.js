@@ -18,6 +18,7 @@ app.use(express.json());
 // MongoDB connection
 connectDB();
 
+app.use(cors());
 // Routes
 
 //  authentication routes
