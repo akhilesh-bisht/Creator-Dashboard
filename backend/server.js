@@ -20,7 +20,7 @@ connectDB();
 
 app.use(
   cors({
-    origin: "http://localhost:5174", // ✅ no '*'
+    origin: "https://creator-dashboard-mocha.vercel.app",
     credentials: true, // ✅ allow credentials
   })
 );
