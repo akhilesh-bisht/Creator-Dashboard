@@ -1,100 +1,128 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useContext } from "react"
-import { AuthContext } from "../context/AuthContext"
-import Navbar from "../components/Navbar"
-import FeedCard from "../components/FeedCard"
-import LoadingSpinner from "../components/LoadingSpinner"
+import { useState, useEffect, useContext } from "react";
+import { toast } from "react-toastify";
+import Navbar from "../components/Navbar";
+import FeedCard from "../components/FeedCard";
+import LoadingSpinner from "../components/LoadingSpinner";
+import {
+  getAllSavedFeeds,
+  getUserCredits,
+  deleteSavedFeed,
+  reportFeed,
+} from "../services/api";
+import { AuthContext } from "../context/AuthContext";
 
 const Dashboard = () => {
-  const { user } = useContext(AuthContext)
-  const [savedFeeds, setSavedFeeds] = useState([])
-  const [recentActivity, setRecentActivity] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { user } = useContext(AuthContext);
+  const [savedFeeds, setSavedFeeds] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [userCredits, setUserCredits] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Simulate API call to fetch saved feeds and recent activity
-    const fetchData = async () => {
-      try {
-        // In a real app, these would be API calls
-        // For demo, we'll use dummy data
+  const fetchData = async () => {
+    try {
+      setLoading(true);
 
-        // Simulate network delay
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Fetch user credits
+      const creditsResponse = await getUserCredits();
+      setUserCredits(creditsResponse.data);
 
-        const dummySavedFeeds = [
-          {
-            id: 1,
-            title: "How to Optimize Your Content Strategy",
-            content: "Learn the best practices for content optimization in 2023...",
-            author: "Jane Smith",
-            timestamp: new Date("2023-05-15T10:30:00").toISOString(),
-            image:
-              "https://images.unsplash.com/photo-1504639725590-34d0984388bd?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-          },
-          {
-            id: 2,
-            title: "The Future of Social Media Marketing",
-            content: "Discover emerging trends in social media that will shape the future...",
-            author: "Mark Johnson",
-            timestamp: new Date("2023-05-10T14:20:00").toISOString(),
-            image:
-              "https://images.unsplash.com/photo-1611162616475-46b635cb6868?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-          },
-        ]
+      // Fetch saved feeds
+      const feedsResponse = await getAllSavedFeeds();
+      setSavedFeeds(feedsResponse.data);
 
-        const dummyRecentActivity = [
-          {
-            id: 1,
-            type: "saved",
-            feed: "How to Optimize Your Content Strategy",
-            timestamp: new Date("2023-05-15T10:30:00").toISOString(),
-          },
-          {
-            id: 2,
-            type: "reported",
-            feed: "Clickbait Article",
-            timestamp: new Date("2023-05-14T09:15:00").toISOString(),
-          },
-          {
-            id: 3,
-            type: "shared",
-            feed: "The Future of Social Media Marketing",
-            timestamp: new Date("2023-05-10T14:20:00").toISOString(),
-          },
-        ]
+      // Dummy recent activity (can be replaced with actual API if available)
+      const dummyRecentActivity = [
+        {
+          id: 1,
+          type: "saved",
+          feed: feedsResponse.data[0]?.title || "A feed",
+          timestamp: new Date().toISOString(),
+        },
+        {
+          id: 2,
+          type: "reported",
+          feed: "Inappropriate Content",
+          timestamp: new Date(Date.now() - 86400000).toISOString(),
+        },
+        {
+          id: 3,
+          type: "shared",
+          feed: feedsResponse.data[1]?.title || "Another feed",
+          timestamp: new Date(Date.now() - 172800000).toISOString(),
+        },
+      ];
 
-        setSavedFeeds(dummySavedFeeds)
-        setRecentActivity(dummyRecentActivity)
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error)
-      } finally {
-        setLoading(false)
+      setRecentActivity(dummyRecentActivity);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error); // Log the full error
+      if (error.response) {
+        // Axios or similar: error.response contains details of the HTTP error
+        toast.error(
+          `Failed to load dashboard data: ${
+            error.response.data.message || "Unknown error"
+          }`
+        );
+      } else if (error.request) {
+        // No response received
+        toast.error("Failed to load dashboard data: No response from server.");
+      } else {
+        // General error
+        toast.error(`Failed to load dashboard data: ${error.message}`);
       }
+    } finally {
+      setLoading(false);
     }
+  };
 
-    fetchData()
-  }, [])
+  const handleRemoveSavedFeed = async (feedId) => {
+    try {
+      // Optimistic update: Remove feed from the UI before the API call
+      setSavedFeeds(savedFeeds.filter((feed) => feed.id !== feedId));
 
-  const handleRemoveSavedFeed = (feedId) => {
-    setSavedFeeds(savedFeeds.filter((feed) => feed.id !== feedId))
-  }
+      await deleteSavedFeed(feedId);
+      toast.success("Feed removed from saved items");
 
-  const handleReportFeed = (feed, reason) => {
-    // In a real app, this would be an API call to report the feed
-    console.log("Reporting feed:", feed.id, "Reason:", reason)
+      // Update recent activity after removal
+      setRecentActivity([
+        {
+          id: Date.now(),
+          type: "removed",
+          feed:
+            savedFeeds.find((feed) => feed.id === feedId)?.title || "A feed",
+          timestamp: new Date().toISOString(),
+        },
+        ...recentActivity,
+      ]);
+    } catch (error) {
+      console.error("Error removing saved feed:", error);
+      toast.error("Failed to remove feed. Please try again.");
+      // Revert the optimistic update in case of error
+      setSavedFeeds([...savedFeeds]);
+    }
+  };
 
-    // Add to recent activity
-    setRecentActivity([
-      {
-        id: Date.now(),
-        type: "reported",
-        feed: feed.title,
-        timestamp: new Date().toISOString(),
-      },
-      ...recentActivity,
-    ])
-  }
+  const handleReportFeed = async (feed, reason) => {
+    try {
+      await reportFeed(feed.id, reason);
+      toast.success("Feed reported successfully");
+
+      // Update recent activity after reporting
+      setRecentActivity([
+        {
+          id: Date.now(),
+          type: "reported",
+          feed: feed.title,
+          timestamp: new Date().toISOString(),
+        },
+        ...recentActivity,
+      ]);
+    } catch (error) {
+      console.error("Error reporting feed:", error);
+      toast.error("Failed to report feed. Please try again.");
+    }
+  };
 
   if (loading) {
     return (
@@ -106,7 +134,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -115,32 +143,46 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="md:flex md:items-center md:justify-between mb-6">
           <div className="flex-1 min-w-0">
-            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">Dashboard</h2>
+            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+              Dashboard
+            </h2>
           </div>
         </div>
 
         <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
           <div className="px-4 py-5 sm:px-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">Account Information</h3>
+            <h3 className="text-lg leading-6 font-medium text-gray-900">
+              Account Information
+            </h3>
           </div>
           <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
             <dl className="sm:divide-y sm:divide-gray-200">
               <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">Full name</dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{user?.fullName}</dd>
+                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  {user?.fullName}
+                </dd>
               </div>
               <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">Username</dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{user?.username}</dd>
+                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  {user?.username}
+                </dd>
               </div>
               <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">Email address</dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{user?.email}</dd>
+                <dt className="text-sm font-medium text-gray-500">
+                  Email address
+                </dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  {user?.email}
+                </dd>
               </div>
               <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">Credits</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded">{user?.credits} Credits</span>
+                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+                    {userCredits?.credits || user?.credits || 0} Credits
+                  </span>
                 </dd>
               </div>
             </dl>
@@ -150,12 +192,18 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="bg-white shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:px-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">Saved Feeds</h3>
-              <p className="mt-1 max-w-2xl text-sm text-gray-500">Your saved content for later reference.</p>
+              <h3 className="text-lg leading-6 font-medium text-gray-900">
+                Saved Feeds
+              </h3>
+              <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                Your saved content for later reference.
+              </p>
             </div>
             <div className="border-t border-gray-200">
               {savedFeeds.length === 0 ? (
-                <div className="px-4 py-5 text-center text-gray-500">No saved feeds yet.</div>
+                <div className="px-4 py-5 text-center text-gray-500">
+                  No saved feeds yet.
+                </div>
               ) : (
                 <div className="px-4 py-5">
                   {savedFeeds.map((feed) => (
@@ -173,12 +221,18 @@ const Dashboard = () => {
 
           <div className="bg-white shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:px-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">Recent Activity</h3>
-              <p className="mt-1 max-w-2xl text-sm text-gray-500">Your recent interactions with feeds.</p>
+              <h3 className="text-lg leading-6 font-medium text-gray-900">
+                Recent Activity
+              </h3>
+              <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                Your recent interactions with feeds.
+              </p>
             </div>
             <div className="border-t border-gray-200">
               {recentActivity.length === 0 ? (
-                <div className="px-4 py-5 text-center text-gray-500">No recent activity.</div>
+                <div className="px-4 py-5 text-center text-gray-500">
+                  No recent activity.
+                </div>
               ) : (
                 <ul className="divide-y divide-gray-200">
                   {recentActivity.map((activity) => (
@@ -229,16 +283,18 @@ const Dashboard = () => {
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 strokeWidth={2}
-                                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                                d="M13 7l5 5-5 5m5-5H6"
                               />
                             </svg>
                           )}
                         </div>
                         <div className="ml-3">
-                          <p className="text-sm font-medium text-gray-900">
-                            You {activity.type} "{activity.feed}"
+                          <p className="text-sm text-gray-500">
+                            {activity.feed} ({activity.type})
                           </p>
-                          <p className="text-sm text-gray-500">{new Date(activity.timestamp).toLocaleString()}</p>
+                          <p className="text-xs text-gray-400">
+                            {new Date(activity.timestamp).toLocaleString()}
+                          </p>
                         </div>
                       </div>
                     </li>
@@ -250,7 +306,7 @@ const Dashboard = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Dashboard
+export default Dashboard;

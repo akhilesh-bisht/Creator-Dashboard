@@ -18,7 +18,12 @@ app.use(express.json());
 // MongoDB connection
 connectDB();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173", // ✅ no '*'
+    credentials: true, // ✅ allow credentials
+  })
+);
 // Routes
 
 //  authentication routes

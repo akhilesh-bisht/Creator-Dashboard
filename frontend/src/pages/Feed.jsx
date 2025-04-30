@@ -5,123 +5,108 @@ import { AuthContext } from "../context/AuthContext"
 import Navbar from "../components/Navbar"
 import FeedCard from "../components/FeedCard"
 import LoadingSpinner from "../components/LoadingSpinner"
+import { getRedditFeed, getTwitterFeed, saveFeed, reportFeed, shareFeed, deleteSavedFeed } from "../services/api"
 import { toast } from "react-toastify"
 
 const Feed = () => {
   const { user } = useContext(AuthContext)
   const [feeds, setFeeds] = useState([])
   const [loading, setLoading] = useState(true)
+  const [feedSource, setFeedSource] = useState("all") // "all", "reddit", "twitter"
   const [savedFeedIds, setSavedFeedIds] = useState([])
 
   useEffect(() => {
-    // Simulate API call to fetch feeds
-    const fetchFeeds = async () => {
-      try {
-        // In a real app, this would be an API call
-        // For demo, we'll use dummy data
-
-        // Simulate network delay
-        await new Promise((resolve) => setTimeout(resolve, 1500))
-
-        const dummyFeeds = [
-          {
-            id: 1,
-            title: "How to Optimize Your Content Strategy",
-            content:
-              "Learn the best practices for content optimization in 2023. This comprehensive guide covers everything from SEO to social media distribution strategies.",
-            author: "Jane Smith",
-            timestamp: new Date("2023-05-15T10:30:00").toISOString(),
-            image:
-              "https://images.unsplash.com/photo-1504639725590-34d0984388bd?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-          },
-          {
-            id: 2,
-            title: "The Future of Social Media Marketing",
-            content:
-              "Discover emerging trends in social media that will shape the future of digital marketing. From AI-powered content creation to immersive AR experiences.",
-            author: "Mark Johnson",
-            timestamp: new Date("2023-05-10T14:20:00").toISOString(),
-            image:
-              "https://images.unsplash.com/photo-1611162616475-46b635cb6868?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-          },
-          {
-            id: 3,
-            title: "Building a Personal Brand Online",
-            content:
-              "Step-by-step guide to establishing your personal brand in the digital space. Learn how to stand out in a crowded market and attract your ideal audience.",
-            author: "Sarah Williams",
-            timestamp: new Date("2023-05-08T09:45:00").toISOString(),
-            image:
-              "https://images.unsplash.com/photo-1493612276216-ee3925520721?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-          },
-          {
-            id: 4,
-            title: "Monetization Strategies for Content Creators",
-            content:
-              "Explore various ways to monetize your content and build sustainable revenue streams. From sponsorships to digital products and subscription models.",
-            author: "David Chen",
-            timestamp: new Date("2023-05-05T16:10:00").toISOString(),
-            image:
-              "https://images.unsplash.com/photo-1553729459-efe14ef6055d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-          },
-          {
-            id: 5,
-            title: "Video Content Creation Tips",
-            content:
-              "Master the art of video content creation with these professional tips. Learn about equipment, lighting, editing, and distribution to maximize engagement.",
-            author: "Emily Rodriguez",
-            timestamp: new Date("2023-05-03T11:25:00").toISOString(),
-            image:
-              "https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-          },
-        ]
-
-        // Get saved feed IDs from localStorage
-        const savedFeeds = JSON.parse(localStorage.getItem("savedFeeds") || "[]")
-        setSavedFeedIds(savedFeeds)
-
-        setFeeds(dummyFeeds)
-      } catch (error) {
-        console.error("Error fetching feeds:", error)
-        toast.error("Failed to load feeds. Please try again later.")
-      } finally {
-        setLoading(false)
-      }
-    }
-
+    // Fetch feeds based on selected source
     fetchFeeds()
-  }, [])
+  }, [feedSource])
 
-  const handleSaveFeed = (feed) => {
-    // Check if already saved
-    const isSaved = savedFeedIds.includes(feed.id)
+  const fetchFeeds = async () => {
+    try {
+      setLoading(true)
 
-    if (isSaved) {
-      // Remove from saved feeds
-      const updatedSavedFeedIds = savedFeedIds.filter((id) => id !== feed.id)
-      setSavedFeedIds(updatedSavedFeedIds)
-      localStorage.setItem("savedFeeds", JSON.stringify(updatedSavedFeedIds))
-      toast.success("Feed removed from saved items")
-    } else {
-      // Add to saved feeds
-      const updatedSavedFeedIds = [...savedFeedIds, feed.id]
-      setSavedFeedIds(updatedSavedFeedIds)
-      localStorage.setItem("savedFeeds", JSON.stringify(updatedSavedFeedIds))
-      toast.success("Feed saved successfully")
+      let combinedFeeds = []
+
+      if (feedSource === "all" || feedSource === "reddit") {
+        const redditResponse = await getRedditFeed()
+        combinedFeeds = [...combinedFeeds, ...redditResponse.data]
+      }
+
+      if (feedSource === "all" || feedSource === "twitter") {
+        const twitterResponse = await getTwitterFeed()
+        combinedFeeds = [...combinedFeeds, ...twitterResponse.data]
+      }
+
+      // Sort by timestamp (newest first)
+      combinedFeeds.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+
+      setFeeds(combinedFeeds)
+
+      // Get saved feed IDs from localStorage or API
+      // For now, we'll use localStorage as a temporary solution
+      const savedFeeds = JSON.parse(localStorage.getItem("savedFeeds") || "[]")
+      setSavedFeedIds(savedFeeds)
+    } catch (error) {
+      console.error("Error fetching feeds:", error)
+      toast.error("Failed to load feeds. Please try again later.")
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleReportFeed = (feed, reason) => {
-    // In a real app, this would be an API call to report the feed
-    console.log("Reporting feed:", feed.id, "Reason:", reason)
+  const handleSaveFeed = async (feed) => {
+    try {
+      // Check if already saved
+      const isSaved = savedFeedIds.includes(feed.id)
 
-    // For demo, we'll just show a success message
-    toast.success("Feed reported successfully")
+      if (isSaved) {
+        // Remove from saved feeds
+        await deleteSavedFeed(feed.id)
+        const updatedSavedFeedIds = savedFeedIds.filter((id) => id !== feed.id)
+        setSavedFeedIds(updatedSavedFeedIds)
+        localStorage.setItem("savedFeeds", JSON.stringify(updatedSavedFeedIds))
+        toast.success("Feed removed from saved items")
+      } else {
+        // Add to saved feeds
+        await saveFeed({
+          feedId: feed.id,
+          title: feed.title,
+          content: feed.content,
+          author: feed.author,
+          source: feed.source || "unknown",
+          image: feed.image || null,
+        })
+        const updatedSavedFeedIds = [...savedFeedIds, feed.id]
+        setSavedFeedIds(updatedSavedFeedIds)
+        localStorage.setItem("savedFeeds", JSON.stringify(updatedSavedFeedIds))
+        toast.success("Feed saved successfully")
+      }
+    } catch (error) {
+      console.error("Error saving/removing feed:", error)
+      toast.error("Failed to save/remove feed. Please try again.")
+    }
+  }
 
-    // Add to reported feeds in localStorage
-    const reportedFeeds = JSON.parse(localStorage.getItem("reportedFeeds") || "[]")
-    const updatedReportedFeeds = [...reportedFeeds, { feedId: feed.id, reason, timestamp: new Date().toISOString() }]
-    localStorage.setItem("reportedFeeds", JSON.stringify(updatedReportedFeeds))
+  const handleShareFeed = async (feed) => {
+    try {
+      await shareFeed(feed.id)
+
+      // In a real app, this would use the Web Share API or copy to clipboard
+      navigator.clipboard.writeText(`https://example.com/feed/${feed.id}`)
+      toast.success("Link copied to clipboard!")
+    } catch (error) {
+      console.error("Error sharing feed:", error)
+      toast.error("Failed to share feed. Please try again.")
+    }
+  }
+
+  const handleReportFeed = async (feed, reason) => {
+    try {
+      await reportFeed(feed.id, reason)
+      toast.success("Feed reported successfully")
+    } catch (error) {
+      console.error("Error reporting feed:", error)
+      toast.error("Failed to report feed. Please try again.")
+    }
   }
 
   return (
@@ -133,6 +118,35 @@ const Feed = () => {
             <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">Feed</h2>
             <p className="mt-1 text-sm text-gray-500">Discover content from creators around the world</p>
           </div>
+
+          <div className="mt-4 md:mt-0">
+            <div className="inline-flex rounded-md shadow-sm">
+              <button
+                onClick={() => setFeedSource("all")}
+                className={`px-4 py-2 text-sm font-medium rounded-l-md ${
+                  feedSource === "all" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"
+                } border border-gray-300`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setFeedSource("reddit")}
+                className={`px-4 py-2 text-sm font-medium ${
+                  feedSource === "reddit" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"
+                } border-t border-b border-gray-300`}
+              >
+                Reddit
+              </button>
+              <button
+                onClick={() => setFeedSource("twitter")}
+                className={`px-4 py-2 text-sm font-medium rounded-r-md ${
+                  feedSource === "twitter" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"
+                } border border-gray-300`}
+              >
+                Twitter
+              </button>
+            </div>
+          </div>
         </div>
 
         {loading ? (
@@ -141,9 +155,22 @@ const Feed = () => {
           </div>
         ) : (
           <div>
-            {feeds.map((feed) => (
-              <FeedCard key={feed.id} feed={feed} onSave={() => handleSaveFeed(feed)} onReport={handleReportFeed} />
-            ))}
+            {feeds.length === 0 ? (
+              <div className="bg-white shadow rounded-lg p-6 text-center text-gray-500">
+                No feeds available. Try a different source or check back later.
+              </div>
+            ) : (
+              feeds.map((feed) => (
+                <FeedCard
+                  key={feed.id}
+                  feed={feed}
+                  onSave={() => handleSaveFeed(feed)}
+                  onShare={() => handleShareFeed(feed)}
+                  onReport={handleReportFeed}
+                  isSaved={savedFeedIds.includes(feed.id)}
+                />
+              ))
+            )}
           </div>
         )}
       </div>

@@ -1,19 +1,24 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
-import { ToastContainer } from "react-toastify"
-import "react-toastify/dist/ReactToastify.css"
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Pages
-import Register from "./pages/Register"
-import Login from "./pages/Login"
-import Dashboard from "./pages/Dashboard"
-import Feed from "./pages/Feed"
-import AdminDashboard from "./pages/AdminDashboard"
-import AdminUsers from "./pages/AdminUsers"
-import AdminReports from "./pages/AdminReports"
-import NotFound from "./pages/NotFound"
+import Register from "./pages/Register";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import Feed from "./pages/Feed";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminUsers from "./pages/AdminUsers";
+import AdminReports from "./pages/AdminReports";
+import NotFound from "./pages/NotFound";
 
 // Context
-import { AuthProvider } from "./context/AuthContext"
+import { AuthProvider } from "./context/AuthContext";
 
 function App() {
   return (
@@ -69,7 +74,7 @@ function App() {
           />
 
           {/* Redirect root to dashboard if logged in, otherwise to login */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<RedirectBasedOnRole />} />
 
           {/* 404 Route */}
           <Route path="*" element={<NotFound />} />
@@ -77,34 +82,55 @@ function App() {
         <ToastContainer position="top-right" autoClose={3000} />
       </Router>
     </AuthProvider>
-  )
+  );
 }
 
 // Private Route Component
 function PrivateRoute({ children }) {
-  const token = localStorage.getItem("token")
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   if (!token) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login" replace />;
   }
 
-  return children
+  if (user.role === "Admin") {
+    return <Navigate to="/admin" replace />;
+  }
+
+  return children;
 }
 
 // Admin Route Component
 function AdminRoute({ children }) {
-  const token = localStorage.getItem("token")
-  const user = JSON.parse(localStorage.getItem("user") || "{}")
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   if (!token) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login" replace />;
   }
 
-  if (!user.isAdmin) {
-    return <Navigate to="/dashboard" replace />
+  if (user.role !== "Admin") {
+    return <Navigate to="/dashboard" replace />;
   }
 
-  return children
+  return children;
 }
 
-export default App
+// Dynamic redirect based on role
+function RedirectBasedOnRole() {
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return user.role === "Admin" ? (
+    <Navigate to="/admin" replace />
+  ) : (
+    <Navigate to="/dashboard" replace />
+  );
+}
+
+export default App;

@@ -3,19 +3,16 @@
 import { useState } from "react"
 import { toast } from "react-toastify"
 
-const FeedCard = ({ feed, onSave, onReport }) => {
+const FeedCard = ({ feed, onSave, onShare, onReport, isSaved = false }) => {
   const [showReportModal, setShowReportModal] = useState(false)
   const [reportReason, setReportReason] = useState("")
 
   const handleShare = () => {
-    // In a real app, this would use the Web Share API or copy to clipboard
-    navigator.clipboard.writeText(`https://example.com/feed/${feed.id}`)
-    toast.success("Link copied to clipboard!")
+    onShare(feed)
   }
 
   const handleSave = () => {
     onSave(feed)
-    toast.success("Feed saved successfully!")
   }
 
   const handleReport = () => {
@@ -27,7 +24,6 @@ const FeedCard = ({ feed, onSave, onReport }) => {
     onReport(feed, reportReason)
     setReportReason("")
     setShowReportModal(false)
-    toast.success("Feed reported successfully!")
   }
 
   return (
@@ -35,11 +31,14 @@ const FeedCard = ({ feed, onSave, onReport }) => {
       <div className="p-4">
         <div className="flex items-center mb-2">
           <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-            <span className="text-gray-600 font-medium">{feed.author.charAt(0)}</span>
+            <span className="text-gray-600 font-medium">{feed.author?.charAt(0) || "U"}</span>
           </div>
           <div>
             <h3 className="text-sm font-medium">{feed.author}</h3>
-            <p className="text-xs text-gray-500">{new Date(feed.timestamp).toLocaleString()}</p>
+            <p className="text-xs text-gray-500">
+              {new Date(feed.timestamp).toLocaleString()}
+              {feed.source && <span className="ml-2 bg-gray-100 px-2 py-0.5 rounded text-xs">{feed.source}</span>}
+            </p>
           </div>
         </div>
 
@@ -57,7 +56,7 @@ const FeedCard = ({ feed, onSave, onReport }) => {
             <svg
               className="h-4 w-4 mr-1"
               xmlns="http://www.w3.org/2000/svg"
-              fill="none"
+              fill={isSaved ? "currentColor" : "none"}
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
@@ -68,7 +67,7 @@ const FeedCard = ({ feed, onSave, onReport }) => {
                 d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
               />
             </svg>
-            Save
+            {isSaved ? "Unsave" : "Save"}
           </button>
 
           <button onClick={handleShare} className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
