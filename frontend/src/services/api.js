@@ -37,7 +37,7 @@ export const getAllUsers = async () => {
 export const updateUserCredits = (userId, credits) =>
   api.put(`/api/admin/user/credits/${userId}`, { credits });
 export const deleteUser = (userId) => api.delete(`/api/admin/user/${userId}`);
-export const getUserCredits = () => api.get("/api/auth/credits");
+export const getUserCredits = () => api.get("/api/admin/credits");
 
 // 3- SAVED FEEDS
 export const saveFeed = (data) => api.post("/api/feed/save", data);

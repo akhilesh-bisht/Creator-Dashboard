@@ -1,127 +1,101 @@
 "use client";
 
 import { useState, useEffect, useContext } from "react";
-import { toast } from "react-toastify";
+import { AuthContext } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 import FeedCard from "../components/FeedCard";
 import LoadingSpinner from "../components/LoadingSpinner";
-import {
-  getAllSavedFeeds,
-  getUserCredits,
-  deleteSavedFeed,
-  reportFeed,
-} from "../services/api";
-import { AuthContext } from "../context/AuthContext";
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
   const [savedFeeds, setSavedFeeds] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
-  const [userCredits, setUserCredits] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
+  useEffect(() => {
+    // Simulate API call to fetch saved feeds and recent activity
+    const fetchData = async () => {
+      try {
+        // In a real app, these would be API calls
+        // For demo, we'll use dummy data
 
-      // Fetch user credits
-      const creditsResponse = await getUserCredits();
-      setUserCredits(creditsResponse.data);
+        // Simulate network delay
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Fetch saved feeds
-      const feedsResponse = await getAllSavedFeeds();
-      setSavedFeeds(feedsResponse.data);
+        const dummySavedFeeds = [
+          {
+            id: 1,
+            title: "How to Optimize Your Content Strategy",
+            content:
+              "Learn the best practices for content optimization in 2023...",
+            author: "Jane Smith",
+            timestamp: new Date("2023-05-15T10:30:00").toISOString(),
+            image:
+              "https://images.unsplash.com/photo-1504639725590-34d0984388bd?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+          },
+          {
+            id: 2,
+            title: "The Future of Social Media Marketing",
+            content:
+              "Discover emerging trends in social media that will shape the future...",
+            author: "Mark Johnson",
+            timestamp: new Date("2023-05-10T14:20:00").toISOString(),
+            image:
+              "https://images.unsplash.com/photo-1611162616475-46b635cb6868?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+          },
+        ];
 
-      // Dummy recent activity (can be replaced with actual API if available)
-      const dummyRecentActivity = [
-        {
-          id: 1,
-          type: "saved",
-          feed: feedsResponse.data[0]?.title || "A feed",
-          timestamp: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          type: "reported",
-          feed: "Inappropriate Content",
-          timestamp: new Date(Date.now() - 86400000).toISOString(),
-        },
-        {
-          id: 3,
-          type: "shared",
-          feed: feedsResponse.data[1]?.title || "Another feed",
-          timestamp: new Date(Date.now() - 172800000).toISOString(),
-        },
-      ];
+        const dummyRecentActivity = [
+          {
+            id: 1,
+            type: "saved",
+            feed: "How to Optimize Your Content Strategy",
+            timestamp: new Date("2023-05-15T10:30:00").toISOString(),
+          },
+          {
+            id: 2,
+            type: "reported",
+            feed: "Clickbait Article",
+            timestamp: new Date("2023-05-14T09:15:00").toISOString(),
+          },
+          {
+            id: 3,
+            type: "shared",
+            feed: "The Future of Social Media Marketing",
+            timestamp: new Date("2023-05-10T14:20:00").toISOString(),
+          },
+        ];
 
-      setRecentActivity(dummyRecentActivity);
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error); // Log the full error
-      if (error.response) {
-        // Axios or similar: error.response contains details of the HTTP error
-        toast.error(
-          `Failed to load dashboard data: ${
-            error.response.data.message || "Unknown error"
-          }`
-        );
-      } else if (error.request) {
-        // No response received
-        toast.error("Failed to load dashboard data: No response from server.");
-      } else {
-        // General error
-        toast.error(`Failed to load dashboard data: ${error.message}`);
+        setSavedFeeds(dummySavedFeeds);
+        setRecentActivity(dummyRecentActivity);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleRemoveSavedFeed = (feedId) => {
+    setSavedFeeds(savedFeeds.filter((feed) => feed.id !== feedId));
   };
 
-  const handleRemoveSavedFeed = async (feedId) => {
-    try {
-      // Optimistic update: Remove feed from the UI before the API call
-      setSavedFeeds(savedFeeds.filter((feed) => feed.id !== feedId));
+  const handleReportFeed = (feed, reason) => {
+    // In a real app, this would be an API call to report the feed
+    console.log("Reporting feed:", feed.id, "Reason:", reason);
 
-      await deleteSavedFeed(feedId);
-      toast.success("Feed removed from saved items");
-
-      // Update recent activity after removal
-      setRecentActivity([
-        {
-          id: Date.now(),
-          type: "removed",
-          feed:
-            savedFeeds.find((feed) => feed.id === feedId)?.title || "A feed",
-          timestamp: new Date().toISOString(),
-        },
-        ...recentActivity,
-      ]);
-    } catch (error) {
-      console.error("Error removing saved feed:", error);
-      toast.error("Failed to remove feed. Please try again.");
-      // Revert the optimistic update in case of error
-      setSavedFeeds([...savedFeeds]);
-    }
-  };
-
-  const handleReportFeed = async (feed, reason) => {
-    try {
-      await reportFeed(feed.id, reason);
-      toast.success("Feed reported successfully");
-
-      // Update recent activity after reporting
-      setRecentActivity([
-        {
-          id: Date.now(),
-          type: "reported",
-          feed: feed.title,
-          timestamp: new Date().toISOString(),
-        },
-        ...recentActivity,
-      ]);
-    } catch (error) {
-      console.error("Error reporting feed:", error);
-      toast.error("Failed to report feed. Please try again.");
-    }
+    // Add to recent activity
+    setRecentActivity([
+      {
+        id: Date.now(),
+        type: "reported",
+        feed: feed.title,
+        timestamp: new Date().toISOString(),
+      },
+      ...recentActivity,
+    ]);
   };
 
   if (loading) {
@@ -181,7 +155,7 @@ const Dashboard = () => {
                 <dt className="text-sm font-medium text-gray-500">Credits</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                   <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
-                    {userCredits?.credits || user?.credits || 0} Credits
+                    {user?.credits} Credits
                   </span>
                 </dd>
               </div>
@@ -283,16 +257,16 @@ const Dashboard = () => {
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 strokeWidth={2}
-                                d="M13 7l5 5-5 5m5-5H6"
+                                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
                               />
                             </svg>
                           )}
                         </div>
                         <div className="ml-3">
-                          <p className="text-sm text-gray-500">
-                            {activity.feed} ({activity.type})
+                          <p className="text-sm font-medium text-gray-900">
+                            You {activity.type} "{activity.feed}"
                           </p>
-                          <p className="text-xs text-gray-400">
+                          <p className="text-sm text-gray-500">
                             {new Date(activity.timestamp).toLocaleString()}
                           </p>
                         </div>

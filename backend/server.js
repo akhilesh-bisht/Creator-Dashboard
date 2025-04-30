@@ -20,7 +20,7 @@ connectDB();
 
 app.use(
   cors({
-    origin: "http://localhost:5173", // ✅ no '*'
+    origin: "http://localhost:5174", // ✅ no '*'
     credentials: true, // ✅ allow credentials
   })
 );

@@ -11,10 +11,10 @@ import { protect } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 // Save a feed
-router.post("/save", protect, saveFeed);
+router.post("/save", saveFeed);
 
 // Get all saved feeds
-router.get("/saved", protect, getAllSavedFeeds);
+router.get("/saved", getAllSavedFeeds);
 
 // Get a single saved feed by ID
 router.get("/saved/:postId", protect, getSingleSavedFeed);

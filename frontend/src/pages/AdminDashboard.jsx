@@ -117,7 +117,7 @@ const AdminDashboard = () => {
                   Total Feeds
                 </dt>
                 <dd className="mt-1 text-3xl font-semibold text-gray-900">
-                  {stats.Feeds}
+                  {stats.totalFeeds}
                 </dd>
                 <dd className="mt-2 text-sm text-red-600">
                   {stats.reportedFeeds} reported
