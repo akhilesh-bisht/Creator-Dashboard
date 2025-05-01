@@ -2,7 +2,8 @@ import axios from "axios";
 
 // Axios instance
 const api = axios.create({
-  baseURL: "https://creator-dashboard-s7bl.onrender.com",
+  // baseURL: "https://creator-dashboard-s7bl.onrender.com",
+  baseURL: "http://localhost:4500",
   withCredentials: true, // To ensure cookies are sent along with the request
 });
 
@@ -26,12 +27,7 @@ export const updateProfile = (data) => api.patch("/api/auth/update", data);
 
 // 2- ADMIN PANEL API
 export const getAllUsers = async () => {
-  const token = localStorage.getItem("token");
-  return await api.get("/api/admin/users", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  return await api.get("/api/admin/users");
 };
 
 export const updateUserCredits = (userId, credits) =>

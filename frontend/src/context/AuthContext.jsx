@@ -35,6 +35,9 @@ export const AuthProvider = ({ children }) => {
 
       // Save token and user to localStorage
       localStorage.setItem("token", response.data.accessToken);
+      console.log(response.data.accessToken);
+      console.log(response.data.credits);
+
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
       // Set auth token for future requests
@@ -42,6 +45,7 @@ export const AuthProvider = ({ children }) => {
 
       // Update state
       setUser(response.data.user);
+      console.log(user);
 
       return response.data;
     } catch (error) {

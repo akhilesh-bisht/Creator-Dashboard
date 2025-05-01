@@ -5,6 +5,7 @@ import { AuthContext } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 import FeedCard from "../components/FeedCard";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { getUserCredits } from "../services/api";
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);

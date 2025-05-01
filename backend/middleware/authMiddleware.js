@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 import { User } from "../models/user.model.js";
-
 export const protect = async (req, res, next) => {
   let token;
 
@@ -13,17 +12,19 @@ export const protect = async (req, res, next) => {
 
       const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
-      req.user = await User.findById(decoded._id).select("-password"); // <-- fix here
+      req.user = await User.findById(decoded._id).select("-password");
 
-      next();
+      if (!req.user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      return next();
     } catch (err) {
       return res
         .status(401)
-        .json({ message: "Not authorized, token failed", token });
+        .json({ message: "Not authorized, token invalid", error: err.message });
     }
   }
 
-  if (!token) {
-    return res.status(401).json({ message: "Not authorized, no token" });
-  }
+  return res.status(401).json({ message: "Not authorized, no token" });
 };

@@ -27,7 +27,7 @@ const userSchema = new Schema(
     },
 
     // Extra fields for your project
-    role: { type: String, enum: ["user", "admin"], default: "user" },
+    role: { type: String, enum: ["User", "admin"], default: "User" },
 
     credits: { type: Number, default: 0 },
     savedFeeds: [

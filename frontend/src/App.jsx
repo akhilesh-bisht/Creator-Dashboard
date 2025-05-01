@@ -20,6 +20,13 @@ import NotFound from "./pages/NotFound";
 // Context
 import { AuthProvider } from "./context/AuthContext";
 
+// Route guards
+import {
+  PrivateRoute,
+  AdminRoute,
+  RedirectBasedOnRole,
+} from "./protect/ProtectRoute";
+
 function App() {
   return (
     <AuthProvider>
@@ -73,63 +80,15 @@ function App() {
             }
           />
 
-          {/* Redirect root to dashboard if logged in, otherwise to login */}
+          {/* Role-Based Redirection for root */}
           <Route path="/" element={<RedirectBasedOnRole />} />
 
-          {/* 404 Route */}
+          {/* 404 Fallback */}
           <Route path="*" element={<NotFound />} />
         </Routes>
         <ToastContainer position="top-right" autoClose={3000} />
       </Router>
     </AuthProvider>
-  );
-}
-
-// Private Route Component
-function PrivateRoute({ children }) {
-  const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (user.role === "Admin") {
-    return <Navigate to="/admin" replace />;
-  }
-
-  return children;
-}
-
-// Admin Route Component
-function AdminRoute({ children }) {
-  const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (user.role !== "Admin") {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return children;
-}
-
-// Dynamic redirect based on role
-function RedirectBasedOnRole() {
-  const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return user.role === "Admin" ? (
-    <Navigate to="/admin" replace />
-  ) : (
-    <Navigate to="/dashboard" replace />
   );
 }
 

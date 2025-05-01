@@ -12,7 +12,7 @@ const Register = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "user", // Include role here
+    role: "User",
   });
   const [loading, setLoading] = useState(false);
   const { register } = useContext(AuthContext);

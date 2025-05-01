@@ -1,3 +1,4 @@
+// routes/admin.routes.js
 import express from "express";
 import {
   getAllUsers,
@@ -5,14 +6,15 @@ import {
   getUserCredits,
   deleteUser,
 } from "../controllers/admin.controller.js";
-import { isAdmin } from "../middleware/adminMiddleware.js";
 import { protect } from "../middleware/authMiddleware.js";
+import { isAdmin } from "../middleware/adminMiddleware.js";
+
 const router = express.Router();
 
-// Admin routes
-router.get("/users", isAdmin, getAllUsers); // Admin can view all users
-router.put("/user/credits/:userId", isAdmin, updateUserCredits); // Admin can update user credits
-router.delete("/user/:userId", isAdmin, deleteUser); // Admin can delete user
-//  all credits
-router.get("/credits", getUserCredits);
+// Admin Routes (protected + admin check)
+router.get("/users", protect, isAdmin, getAllUsers);
+router.put("/user/credits/:userId", protect, isAdmin, updateUserCredits);
+router.delete("/user/:userId", protect, isAdmin, deleteUser);
+router.get("/credits", protect, getUserCredits); // Optional admin check
+
 export default router;
