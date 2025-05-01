@@ -6,7 +6,6 @@ import {
   deleteSavedFeed,
   shareFeed,
 } from "../controllers/feed.controller.js";
-import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -17,11 +16,11 @@ router.post("/save", saveFeed);
 router.get("/saved", getAllSavedFeeds);
 
 // Get a single saved feed by ID
-router.get("/saved/:postId", protect, getSingleSavedFeed);
+router.get("/saved/:postId", getSingleSavedFeed);
 
 // Delete a saved feed by ID
 
-router.delete("/saved/:postId", protect, deleteSavedFeed);
+router.delete("/saved/:postId", deleteSavedFeed);
 
 //  share feed
 router.post("/share/:feedId", shareFeed);

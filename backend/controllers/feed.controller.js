@@ -27,20 +27,18 @@ export const saveFeed = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Check if feed already saved
+    // Check if already saved
     const alreadySaved = user.savedFeeds.includes(feed._id);
-    if (alreadySaved) {
-      return res.status(400).json({ error: "Feed already saved" });
+    if (!alreadySaved) {
+      user.savedFeeds.push(feed._id);
+      user.credits += 5;
+      await user.save();
     }
 
-    // Save feed reference
-    user.savedFeeds.push(feed._id);
-    user.credits += 5;
-
-    await user.save();
-
     res.status(200).json({
-      message: "Feed saved successfully and credits added!",
+      message: alreadySaved
+        ? "Feed already saved (ignored)"
+        : "Feed saved successfully and credits added!",
       user: {
         _id: user._id,
         credits: user.credits,

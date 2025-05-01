@@ -5,7 +5,8 @@ import { AuthContext } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 import FeedCard from "../components/FeedCard";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { getRedditFeed, getTwitterFeed } from "../services/api";
+import { getRedditFeed } from "../services/api"; // Reddit feed service
+import { getTwitterFeed } from "../services/api"; // Twitter feed service
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -13,7 +14,7 @@ const Feed = () => {
   const { user } = useContext(AuthContext);
   const [feeds, setFeeds] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [feedSource, setFeedSource] = useState("all");
+  const [feedSource, setFeedSource] = useState("reddit"); // Default to Reddit
 
   useEffect(() => {
     fetchFeeds();
@@ -24,18 +25,18 @@ const Feed = () => {
       setLoading(true);
       let combinedFeeds = [];
 
-      if (feedSource === "all" || feedSource === "reddit") {
+      if (feedSource === "reddit") {
         const redditResponse = await getRedditFeed();
         combinedFeeds = [...combinedFeeds, ...redditResponse.data];
       }
 
-      if (feedSource === "all" || feedSource === "twitter") {
+      if (feedSource === "twitter") {
         const twitterResponse = await getTwitterFeed();
         combinedFeeds = [...combinedFeeds, ...twitterResponse.data];
       }
 
       combinedFeeds.sort(
-        (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+        (a, b) => new Date(b.timestamp) - new Date(a.timestamp) // Sort by timestamp
       );
       setFeeds(combinedFeeds);
     } catch (error) {
@@ -43,18 +44,6 @@ const Feed = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSaveFeed = (feed) => {
-    toast.success("Feed saved");
-  };
-
-  const handleShareFeed = (feed) => {
-    navigator.clipboard.writeText(`https://example.com/feed/${feed.id}`);
-  };
-
-  const handleReportFeed = (feed, reason) => {
-    console.log("Reported feed", feed.id, "Reason:", reason);
   };
 
   return (
@@ -67,29 +56,19 @@ const Feed = () => {
               Feed
             </h2>
             <p className="mt-1 text-sm text-gray-500">
-              Discover content from creators around the world
+              Discover content from Reddit and Twitter
             </p>
           </div>
 
           <div className="mt-4 md:mt-0">
             <div className="inline-flex rounded-md shadow-sm">
               <button
-                onClick={() => setFeedSource("all")}
-                className={`px-4 py-2 text-sm font-medium rounded-l-md ${
-                  feedSource === "all"
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-700 hover:bg-gray-50"
-                } border border-gray-300`}
-              >
-                All
-              </button>
-              <button
                 onClick={() => setFeedSource("reddit")}
-                className={`px-4 py-2 text-sm font-medium ${
+                className={`px-4 py-2 text-sm font-medium rounded-l-md ${
                   feedSource === "reddit"
                     ? "bg-blue-600 text-white"
                     : "bg-white text-gray-700 hover:bg-gray-50"
-                } border-t border-b border-gray-300`}
+                } border border-gray-300`}
               >
                 Reddit
               </button>
@@ -115,17 +94,11 @@ const Feed = () => {
           <div>
             {feeds.length === 0 ? (
               <div className="bg-white shadow rounded-lg p-6 text-center text-gray-500">
-                No feeds available. Try a different source or check back later.
+                No feeds available. Try again later.
               </div>
             ) : (
               feeds.map((feed) => (
-                <FeedCard
-                  key={feed.id}
-                  feed={feed}
-                  onSave={() => handleSaveFeed(feed)}
-                  onShare={() => handleShareFeed(feed)}
-                  onReport={handleReportFeed}
-                />
+                <FeedCard key={feed.id} postID={user._id} feed={feed} />
               ))
             )}
           </div>

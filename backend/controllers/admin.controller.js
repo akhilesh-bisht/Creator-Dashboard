@@ -3,7 +3,9 @@ import { User } from "../models/user.model.js";
 // Get All Users (Admin only)
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("fullName email credits role");
+    const users = await User.find().select(
+      "fullName email credits role createdAt lastLogin"
+    );
     return res.status(200).json({ users });
   } catch (error) {
     console.error("Error fetching users:", error);

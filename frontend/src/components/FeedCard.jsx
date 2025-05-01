@@ -1,43 +1,88 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { toast } from "react-toastify"
+import { useState } from "react";
+import { toast } from "react-toastify";
+import { saveFeed, shareFeed, reportFeed } from "../services/api"; // Importing the API functions
 
 const FeedCard = ({ feed, onSave, onShare, onReport, isSaved = false }) => {
-  const [showReportModal, setShowReportModal] = useState(false)
-  const [reportReason, setReportReason] = useState("")
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [saved, setSaved] = useState(isSaved);
 
-  const handleShare = () => {
-    onShare(feed)
-  }
+  // Handle Save Feed
+  const handleSave = async () => {
+    try {
+      const feedData = {
+        postId: feed.id,
+        source: feed.subreddit,
+        title: feed.title,
+        url: feed.url,
+      };
+      await saveFeed(feedData);
+      toast.success("Feed saved successfully!");
+      setSaved(true); // Update local saved state
+      onSave(feed);
+    } catch (error) {}
+  };
 
-  const handleSave = () => {
-    onSave(feed)
-  }
+  // Handle Share Feed
+  const handleShare = async () => {
+    try {
+      const shareUrl = feed.url || window.location.href;
 
-  const handleReport = () => {
-    if (!reportReason.trim()) {
-      toast.error("Please provide a reason for reporting")
-      return
+      // Copy to clipboard
+      await navigator.clipboard.writeText(shareUrl);
+
+      toast.success("Link copied to clipboard!");
+
+      // Optional: Share sheet (for supported devices)
+      if (navigator.share) {
+        await navigator.share({
+          title: feed.title,
+          text: feed.title,
+          url: shareUrl,
+        });
+      }
+
+      onShare(feed); // Notify parent
+    } catch (error) {
+      toast.error("Error sharing feed");
     }
+  };
 
-    onReport(feed, reportReason)
-    setReportReason("")
-    setShowReportModal(false)
-  }
+  // Handle Report Feed
+  const handleReport = async () => {
+    if (!reportReason.trim()) {
+      toast.error("Please provide a reason for reporting");
+      return;
+    }
+    try {
+      await reportFeed(feed.id, reportReason);
+      toast.success("Feed reported successfully!");
+      setReportReason("");
+      setShowReportModal(false);
+      onReport(feed, reportReason);
+    } catch (error) {}
+  };
 
   return (
     <div className="bg-white shadow rounded-lg overflow-hidden mb-4">
       <div className="p-4">
         <div className="flex items-center mb-2">
           <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-            <span className="text-gray-600 font-medium">{feed.author?.charAt(0) || "U"}</span>
+            <span className="text-gray-600 font-medium">
+              {feed.author?.charAt(0) || "U"}
+            </span>
           </div>
           <div>
             <h3 className="text-sm font-medium">{feed.author}</h3>
             <p className="text-xs text-gray-500">
               {new Date(feed.timestamp).toLocaleString()}
-              {feed.source && <span className="ml-2 bg-gray-100 px-2 py-0.5 rounded text-xs">{feed.source}</span>}
+              {feed.source && (
+                <span className="ml-2 bg-gray-100 px-2 py-0.5 rounded text-xs">
+                  {feed.source}
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -47,16 +92,28 @@ const FeedCard = ({ feed, onSave, onShare, onReport, isSaved = false }) => {
 
         {feed.image && (
           <div className="mb-4">
-            <img src={feed.image || "/placeholder.svg"} alt={feed.title} className="w-full h-48 object-cover rounded" />
+            <img
+              src={feed.image || "/placeholder.svg"}
+              alt={feed.title}
+              className="w-full h-48 object-cover rounded"
+            />
           </div>
         )}
 
         <div className="flex justify-between border-t pt-3">
-          <button onClick={handleSave} className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+          {/* Save Button */}
+          <button
+            onClick={handleSave}
+            className={`text-sm flex items-center px-2 py-1 rounded ${
+              saved
+                ? "bg-blue-700 text-white hover:bg-blue-800"
+                : "text-blue-600 hover:text-blue-800"
+            }`}
+          >
             <svg
               className="h-4 w-4 mr-1"
               xmlns="http://www.w3.org/2000/svg"
-              fill={isSaved ? "currentColor" : "none"}
+              fill={saved ? "currentColor" : "none"}
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
@@ -67,10 +124,14 @@ const FeedCard = ({ feed, onSave, onShare, onReport, isSaved = false }) => {
                 d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
               />
             </svg>
-            {isSaved ? "Unsave" : "Save"}
+            {saved ? "Saved" : "Save"}
           </button>
 
-          <button onClick={handleShare} className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+          {/* Share Button */}
+          <button
+            onClick={handleShare}
+            className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+          >
             <svg
               className="h-4 w-4 mr-1"
               xmlns="http://www.w3.org/2000/svg"
@@ -88,6 +149,7 @@ const FeedCard = ({ feed, onSave, onShare, onReport, isSaved = false }) => {
             Share
           </button>
 
+          {/* Report Button */}
           <button
             onClick={() => setShowReportModal(true)}
             className="text-sm text-red-600 hover:text-red-800 flex items-center"
@@ -116,7 +178,9 @@ const FeedCard = ({ feed, onSave, onShare, onReport, isSaved = false }) => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <h3 className="text-lg font-medium mb-4">Report Feed</h3>
-            <p className="text-sm text-gray-600 mb-4">Please provide a reason for reporting this feed.</p>
+            <p className="text-sm text-gray-600 mb-4">
+              Please provide a reason for reporting this feed.
+            </p>
 
             <textarea
               value={reportReason}
@@ -143,7 +207,7 @@ const FeedCard = ({ feed, onSave, onShare, onReport, isSaved = false }) => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default FeedCard
+export default FeedCard;

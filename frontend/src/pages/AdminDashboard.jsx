@@ -4,8 +4,11 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { getAllUsers, getAllReportedFeeds } from "../services/api";
-import { toast } from "react-toastify";
+import {
+  getAllUsers,
+  getAllReportedFeeds,
+  getAllSavedFeeds, // I see you are using this, so make sure it's imported correctly
+} from "../services/api";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -15,49 +18,49 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
 
-      const [usersResponse, reportsResponse] = await Promise.all([
-        getAllUsers(),
-        getAllReportedFeeds(),
-      ]);
+      const [usersResponse, reportsResponse, feedsResponse] = await Promise.all(
+        [getAllUsers(), getAllReportedFeeds(), getAllSavedFeeds()]
+      );
 
       const users = Array.isArray(usersResponse?.data?.users)
         ? usersResponse.data.users
         : [];
 
-      let reports = [];
-
-      if (Array.isArray(reportsResponse?.data?.reports)) {
-        reports = reportsResponse.data.reports;
-      } else if (Array.isArray(reportsResponse?.data)) {
-        reports = reportsResponse.data;
-      } else {
-        console.warn("Unexpected reports format:", reportsResponse?.data);
-      }
+      const reports = Array.isArray(reportsResponse?.data?.reports)
+        ? reportsResponse.data.reports
+        : [];
 
       const totalCreditsIssued = users.reduce(
         (total, user) => total + (user.credits || 0),
         0
       );
 
+      const feeds = Array.isArray(feedsResponse?.data?.feeds)
+        ? feedsResponse.data.feeds
+        : [];
+
+      // Update stats with fetched data
       const dummyStats = {
         totalUsers: users.length,
         newUsersToday: 0, // placeholder
-        totalFeeds: 0, // placeholder
         reportedFeeds: reports.length,
         totalCreditsIssued,
       };
 
       setStats(dummyStats);
     } catch (error) {
-      console.error("Error fetching admin stats:", error);
-      toast.error("Failed to load admin dashboard data. Please try again.");
+      console.error("Error fetching stats:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchStats();
+    const loadStats = async () => {
+      await fetchStats();
+    };
+
+    loadStats();
   }, []);
 
   if (loading || !stats) {
@@ -105,31 +108,6 @@ const AdminDashboard = () => {
                 className="text-sm font-medium text-blue-600 hover:text-blue-500"
               >
                 View all users
-              </Link>
-            </div>
-          </div>
-
-          {/* Total Feeds Card */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">
-                  Total Feeds
-                </dt>
-                <dd className="mt-1 text-3xl font-semibold text-gray-900">
-                  {stats.totalFeeds}
-                </dd>
-                <dd className="mt-2 text-sm text-red-600">
-                  {stats.reportedFeeds} reported
-                </dd>
-              </dl>
-            </div>
-            <div className="bg-gray-50 px-4 py-4 sm:px-6">
-              <Link
-                to="/admin/reports"
-                className="text-sm font-medium text-blue-600 hover:text-blue-500"
-              >
-                View reported feeds
               </Link>
             </div>
           </div>
@@ -247,41 +225,13 @@ const AdminDashboard = () => {
           </div>
           <div className="border-t border-gray-200">
             <dl>
-              <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">
-                  API Status
-                </dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    Operational
-                  </span>
-                </dd>
+              <div className="bg-gray-50 px-4 py-5 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500">Service</dt>
+                <dd className="mt-1 text-sm text-gray-900">Running</dd>
               </div>
-              <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">
-                  Database Status
-                </dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    Operational
-                  </span>
-                </dd>
-              </div>
-              <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">
-                  Last Deployment
-                </dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {new Date().toLocaleString()}
-                </dd>
-              </div>
-              <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">
-                  System Version
-                </dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  v1.2.0
-                </dd>
+              <div className="bg-white px-4 py-5 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500">API</dt>
+                <dd className="mt-1 text-sm text-gray-900">Active</dd>
               </div>
             </dl>
           </div>

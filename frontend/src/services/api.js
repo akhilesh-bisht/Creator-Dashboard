@@ -2,13 +2,14 @@ import axios from "axios";
 
 // Axios instance
 const api = axios.create({
-  // baseURL: "https://creator-dashboard-s7bl.onrender.com",
   baseURL: "http://localhost:4500",
   withCredentials: true, // To ensure cookies are sent along with the request
 });
 
 // Set auth token for future requests
-export const setAuthToken = (token) => {
+export const setAuthToken = () => {
+  const token = localStorage.getItem("token"); // Retrieve token from localStorage
+
   if (token) {
     // Set the Authorization header with the Bearer token
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -20,14 +21,35 @@ export const setAuthToken = (token) => {
 
 // 1- AUTH API FOR USER
 export const registerUser = (data) => api.post("/api/auth/register", data);
-export const loginUser = (email, password) =>
-  api.post("/api/auth/login", { email, password });
-export const logoutUser = () => api.post("/api/auth/logout");
+export const loginUser = async (email, password) => {
+  try {
+    const response = await api.post("/api/auth/login", { email, password });
+    const { token } = response.data; // Assuming the response has the token
+
+    // Save token in localStorage
+    localStorage.setItem("authToken", token);
+
+    // Set the token for future requests
+    setAuthToken();
+
+    return response;
+  } catch (error) {
+    console.error("Login error:", error);
+  }
+};
+export const logoutUser = () => {
+  // Remove token from localStorage
+  localStorage.removeItem("authToken");
+
+  // Remove token from Axios header
+  delete api.defaults.headers.common["Authorization"];
+};
+
 export const updateProfile = (data) => api.patch("/api/auth/update", data);
 
 // 2- ADMIN PANEL API
 export const getAllUsers = async () => {
-  return await api.get("/api/admin/users");
+  return await api.get("/api/admin/users"); // The token will be included automatically
 };
 
 export const updateUserCredits = (userId, credits) =>
