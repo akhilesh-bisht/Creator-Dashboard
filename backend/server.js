@@ -22,26 +22,26 @@ const allowedOrigins = [
   "http://localhost:5173",
 ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // अगर origin undefined है (जैसे Postman से), तो उसे भी allow करें
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true, // ✅ allow credentials
-  })
-);
-
 // app.use(
 //   cors({
-//     origin: "https://creator-dashboard-mocha.vercel.app",
+//     origin: function (origin, callback) {
+//       // अगर origin undefined है (जैसे Postman से), तो उसे भी allow करें
+//       if (!origin || allowedOrigins.includes(origin)) {
+//         callback(null, true);
+//       } else {
+//         callback(new Error("Not allowed by CORS"));
+//       }
+//     },
 //     credentials: true, // ✅ allow credentials
 //   })
 // );
+
+app.use(
+  cors({
+    origin: "https://creator-dashboard-mocha.vercel.app",
+    credentials: true, // ✅ allow credentials
+  })
+);
 // Routes
 
 //  authentication routes

@@ -8,7 +8,7 @@ export default defineConfig({
     proxy: {
       "/api": {
         // target: "https://creator-dashboard-s7bl.onrender.com",
-        target: "http://localhost:4500",
+        target: "https://creator-dashboard-s7bl.onrender.com",
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, ""), // ✅ strip /api from path

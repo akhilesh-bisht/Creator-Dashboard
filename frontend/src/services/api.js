@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Axios instance
 const api = axios.create({
-  baseURL: "http://localhost:4500",
+  baseURL: "https://creator-dashboard-s7bl.onrender.com",
   withCredentials: true, // To ensure cookies are sent along with the request
 });
 
