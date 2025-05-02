@@ -4,7 +4,14 @@ import { useState, useContext } from "react";
 import { toast } from "react-toastify";
 import { AuthContext } from "../context/AuthContext";
 
-const FeedCard = ({ feed, onSave, onShare, onReport, isSaved = false }) => {
+const FeedCard = ({
+  feed,
+  onSave,
+  onShare,
+  onReport,
+  saveFeed,
+  isSaved = false,
+}) => {
   const { user, setUser } = useContext(AuthContext);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reason, setReportReason] = useState("");
@@ -21,9 +28,8 @@ const FeedCard = ({ feed, onSave, onShare, onReport, isSaved = false }) => {
       };
 
       // Save the feed (implementation might differ depending on how you handle saving)
+      saveFeed(feedData);
       toast.success("Feed saved successfully!");
-      setSaved(true);
-      onSave(feed);
 
       // Add 5 credits to user if user data is available
       if (user && setUser) {
@@ -127,7 +133,7 @@ const FeedCard = ({ feed, onSave, onShare, onReport, isSaved = false }) => {
             onClick={handleSave}
             className={`text-sm flex items-center px-2 py-1 rounded ${
               saved
-                ? "bg-blue-700 text-white hover:bg-blue-800"
+                ? "bg-blue-800 text-white hover:bg-blue-900" // Dark blue background for saved state
                 : "text-blue-600 hover:text-blue-800"
             }`}
           >

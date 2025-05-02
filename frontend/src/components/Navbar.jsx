@@ -1,17 +1,25 @@
-"use client"
+"use client";
 
-import { useContext } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import { AuthContext } from "../context/AuthContext"
+import { useContext, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 const Navbar = ({ isAdmin = false }) => {
-  const { user, logout } = useContext(AuthContext)
-  const navigate = useNavigate()
+  const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  // State to handle the mobile menu visibility
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    logout()
-    navigate("/login")
-  }
+    logout();
+    navigate("/login");
+  };
+
+  // Toggle mobile menu visibility
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
 
   return (
     <nav className="bg-white shadow">
@@ -19,9 +27,16 @@ const Navbar = ({ isAdmin = false }) => {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link to={isAdmin ? "/admin" : "/dashboard"} className="text-xl font-bold text-blue-600">
+              <Link
+                to={isAdmin ? "/admin" : "/dashboard"}
+                className="text-xl font-bold text-blue-600"
+              >
                 Creator Dashboard
-                {isAdmin && <span className="ml-2 text-xs bg-red-100 text-red-800 px-2 py-1 rounded">ADMIN</span>}
+                {isAdmin && (
+                  <span className="ml-2 text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+                    ADMIN
+                  </span>
+                )}
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
@@ -69,10 +84,14 @@ const Navbar = ({ isAdmin = false }) => {
               <div className="flex items-center">
                 <span className="text-sm text-gray-500 mr-4">
                   {!isAdmin && (
-                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded">{user.credits} Credits</span>
+                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+                      {user.credits} Credits
+                    </span>
                   )}
                 </span>
-                <span className="text-sm text-gray-700 mr-4">{user.fullName}</span>
+                <span className="text-sm text-gray-700 mr-4">
+                  {user.fullName}
+                </span>
                 <button
                   onClick={handleLogout}
                   className="bg-gray-100 p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -100,7 +119,8 @@ const Navbar = ({ isAdmin = false }) => {
             <button
               type="button"
               className="bg-white inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-              aria-expanded="false"
+              aria-expanded={isMobileMenuOpen ? "true" : "false"}
+              onClick={toggleMobileMenu} // Toggle mobile menu state
             >
               <span className="sr-only">Open main menu</span>
               <svg
@@ -111,15 +131,20 @@ const Navbar = ({ isAdmin = false }) => {
                 stroke="currentColor"
                 aria-hidden="true"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile menu, show/hide based on menu state */}
-      <div className="sm:hidden hidden">
+      {/* Mobile menu */}
+      <div className={`${isMobileMenuOpen ? "block" : "hidden"} sm:hidden`}>
         <div className="pt-2 pb-3 space-y-1">
           {isAdmin ? (
             <>
@@ -163,12 +188,18 @@ const Navbar = ({ isAdmin = false }) => {
           <div className="flex items-center px-4">
             <div className="flex-shrink-0">
               <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                <span className="text-gray-600 font-medium">{user?.fullName?.charAt(0) || "U"}</span>
+                <span className="text-gray-600 font-medium">
+                  {user?.fullName?.charAt(0) || "U"}
+                </span>
               </div>
             </div>
             <div className="ml-3">
-              <div className="text-base font-medium text-gray-800">{user?.fullName}</div>
-              <div className="text-sm font-medium text-gray-500">{user?.email}</div>
+              <div className="text-base font-medium text-gray-800">
+                {user?.fullName}
+              </div>
+              <div className="text-sm font-medium text-gray-500">
+                {user?.email}
+              </div>
             </div>
           </div>
           <div className="mt-3 space-y-1">
@@ -182,7 +213,7 @@ const Navbar = ({ isAdmin = false }) => {
         </div>
       </div>
     </nav>
-  )
-}
+  );
+};
 
-export default Navbar
+export default Navbar;

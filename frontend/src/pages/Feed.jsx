@@ -5,7 +5,7 @@ import { AuthContext } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 import FeedCard from "../components/FeedCard";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { getRedditFeed } from "../services/api";
+import { getRedditFeed, saveFeed } from "../services/api";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -13,6 +13,17 @@ const Feed = () => {
   const { user } = useContext(AuthContext);
   const [feeds, setFeeds] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Fallback posts in case the API fails, with more natural content
+  const fallbackPosts = Array.from({ length: 10 }, (_, index) => ({
+    postId: `fallback-${index}`,
+    url: `Interesting Discussion ${index + 1}`,
+    title: `Here's a fascinating discussion on a topic that many are talking about lately. Stay tuned for more updates! Post number: ${
+      index + 1
+    }`,
+    timestamp: new Date().toISOString(),
+    source: `user${index + 1}`,
+  }));
 
   useEffect(() => {
     fetchFeeds();
@@ -22,13 +33,19 @@ const Feed = () => {
     try {
       setLoading(true);
       const redditResponse = await getRedditFeed();
-      const sortedFeeds = redditResponse.data.sort(
-        (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-      );
-      setFeeds(sortedFeeds);
+
+      if (redditResponse?.data) {
+        const sortedFeeds = redditResponse.data.sort(
+          (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+        );
+        setFeeds(sortedFeeds);
+      } else {
+        setFeeds(fallbackPosts); // Fallback to more natural posts if the response is empty or invalid
+      }
     } catch (error) {
       console.error("Error fetching Reddit feeds:", error);
       toast.error("Failed to load Reddit feed.");
+      setFeeds(fallbackPosts); // Fallback to more natural posts if the API request fails
     } finally {
       setLoading(false);
     }
@@ -59,6 +76,7 @@ const Feed = () => {
                   key={feed.id || feed._id}
                   postID={user._id}
                   feed={feed}
+                  saveFeed={saveFeed}
                 />
               ))
             )}
