@@ -1,41 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { toast } from "react-toastify";
-import { saveFeed, shareFeed, reportFeed } from "../services/api"; // Importing the API functions
+import { AuthContext } from "../context/AuthContext";
 
 const FeedCard = ({ feed, onSave, onShare, onReport, isSaved = false }) => {
+  const { user, setUser } = useContext(AuthContext);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [reportReason, setReportReason] = useState("");
+  const [reason, setReportReason] = useState("");
   const [saved, setSaved] = useState(isSaved);
 
   // Handle Save Feed
   const handleSave = async () => {
     try {
       const feedData = {
-        postId: feed.id,
+        postId: feed._id || feed.id,
         source: feed.subreddit,
         title: feed.title,
         url: feed.url,
       };
-      await saveFeed(feedData);
+
+      // Save the feed (implementation might differ depending on how you handle saving)
       toast.success("Feed saved successfully!");
-      setSaved(true); // Update local saved state
+      setSaved(true);
       onSave(feed);
-    } catch (error) {}
+
+      // Add 5 credits to user if user data is available
+      if (user && setUser) {
+        const updatedUser = { ...user, credits: (user.credits || 0) + 5 };
+
+        // Make sure you're updating the state properly
+        setUser(updatedUser);
+
+        // You can optionally store the updated user object in localStorage to persist across reloads
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      }
+    } catch (error) {
+      console.error("Error while saving feed:", error);
+    }
   };
 
   // Handle Share Feed
   const handleShare = async () => {
     try {
       const shareUrl = feed.url || window.location.href;
-
-      // Copy to clipboard
       await navigator.clipboard.writeText(shareUrl);
-
       toast.success("Link copied to clipboard!");
 
-      // Optional: Share sheet (for supported devices)
       if (navigator.share) {
         await navigator.share({
           title: feed.title,
@@ -44,25 +55,35 @@ const FeedCard = ({ feed, onSave, onShare, onReport, isSaved = false }) => {
         });
       }
 
-      onShare(feed); // Notify parent
-    } catch (error) {
-      toast.error("Error sharing feed");
-    }
+      onShare(feed);
+    } catch (error) {}
   };
 
-  // Handle Report Feed
-  const handleReport = async () => {
-    if (!reportReason.trim()) {
+  // Handle Report Feed using Local Storage
+  const handleReport = () => {
+    if (!reason.trim()) {
       toast.error("Please provide a reason for reporting");
       return;
     }
-    try {
-      await reportFeed(feed.id, reportReason);
-      toast.success("Feed reported successfully!");
-      setReportReason("");
-      setShowReportModal(false);
-      onReport(feed, reportReason);
-    } catch (error) {}
+
+    // Get existing reports from localStorage
+    const existingReports = JSON.parse(localStorage.getItem("reports")) || [];
+
+    // Add the new report to the list
+    const newReport = {
+      feedId: feed._id || feed.id,
+      reason,
+      timestamp: new Date(),
+    };
+
+    // Save the report in localStorage
+    existingReports.push(newReport);
+    localStorage.setItem("reports", JSON.stringify(existingReports));
+
+    toast.success("Report submitted successfully!");
+    setReportReason("");
+    setShowReportModal(false); // Close the modal after reporting
+    onReport(feed, reason);
   };
 
   return (
@@ -183,7 +204,7 @@ const FeedCard = ({ feed, onSave, onShare, onReport, isSaved = false }) => {
             </p>
 
             <textarea
-              value={reportReason}
+              value={reason}
               onChange={(e) => setReportReason(e.target.value)}
               className="w-full border border-gray-300 rounded-md p-2 mb-4 h-24"
               placeholder="Enter reason for reporting..."

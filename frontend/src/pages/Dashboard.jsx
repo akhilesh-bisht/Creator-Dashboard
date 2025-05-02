@@ -5,46 +5,25 @@ import { AuthContext } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 import FeedCard from "../components/FeedCard";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { getUserCredits } from "../services/api";
+import { getUserCredits, getAllSavedFeeds } from "../services/api";
 
 const Dashboard = () => {
-  const { user } = useContext(AuthContext);
+  const { user } = useContext(AuthContext); // Assuming AuthContext provides user data
   const [savedFeeds, setSavedFeeds] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
+  console.log(user);
 
   useEffect(() => {
-    // Simulate API call to fetch saved feeds and recent activity
     const fetchData = async () => {
       try {
-        // In a real app, these would be API calls
-        // For demo, we'll use dummy data
+        const savedFeedsResponse = await getAllSavedFeeds();
+        console.log(
+          "Saved Feeds Response:",
+          savedFeedsResponse.data.savedFeeds
+        );
 
-        // Simulate network delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        const dummySavedFeeds = [
-          {
-            id: 1,
-            title: "How to Optimize Your Content Strategy",
-            content:
-              "Learn the best practices for content optimization in 2023...",
-            author: "Jane Smith",
-            timestamp: new Date("2023-05-15T10:30:00").toISOString(),
-            image:
-              "https://images.unsplash.com/photo-1504639725590-34d0984388bd?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-          },
-          {
-            id: 2,
-            title: "The Future of Social Media Marketing",
-            content:
-              "Discover emerging trends in social media that will shape the future...",
-            author: "Mark Johnson",
-            timestamp: new Date("2023-05-10T14:20:00").toISOString(),
-            image:
-              "https://images.unsplash.com/photo-1611162616475-46b635cb6868?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-          },
-        ];
+        setSavedFeeds(savedFeedsResponse.data.savedFeeds);
 
         const dummyRecentActivity = [
           {
@@ -67,7 +46,6 @@ const Dashboard = () => {
           },
         ];
 
-        setSavedFeeds(dummySavedFeeds);
         setRecentActivity(dummyRecentActivity);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -81,22 +59,6 @@ const Dashboard = () => {
 
   const handleRemoveSavedFeed = (feedId) => {
     setSavedFeeds(savedFeeds.filter((feed) => feed.id !== feedId));
-  };
-
-  const handleReportFeed = (feed, reason) => {
-    // In a real app, this would be an API call to report the feed
-    console.log("Reporting feed:", feed.id, "Reason:", reason);
-
-    // Add to recent activity
-    setRecentActivity([
-      {
-        id: Date.now(),
-        type: "reported",
-        feed: feed.title,
-        timestamp: new Date().toISOString(),
-      },
-      ...recentActivity,
-    ]);
   };
 
   if (loading) {
@@ -124,46 +86,55 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Profile Section */}
         <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
           <div className="px-4 py-5 sm:px-6">
             <h3 className="text-lg leading-6 font-medium text-gray-900">
-              Account Information
+              Profile
             </h3>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">
+              Your account details.
+            </p>
           </div>
-          <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
-            <dl className="sm:divide-y sm:divide-gray-200">
-              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">Full name</dt>
+          <div className="border-t border-gray-200">
+            <dl>
+              <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500">Full Name</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {user?.fullName}
+                  {user.fullName}
                 </dd>
               </div>
-              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">Username</dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {user?.username}
-                </dd>
-              </div>
-              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">
                   Email address
                 </dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {user?.email}
+                  {user.email}
                 </dd>
               </div>
-              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500">Username</dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  {user.username}
+                </dd>
+              </div>
+              <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500">Role</dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  {user.role}
+                </dd>
+              </div>
+              <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">Credits</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
-                    {user?.credits} Credits
-                  </span>
+                  {user.credits}
                 </dd>
               </div>
             </dl>
           </div>
         </div>
 
+        {/* Saved Feeds Section */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="bg-white shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:px-6">
@@ -186,7 +157,6 @@ const Dashboard = () => {
                       key={feed.id}
                       feed={feed}
                       onSave={() => handleRemoveSavedFeed(feed.id)}
-                      onReport={handleReportFeed}
                     />
                   ))}
                 </div>
@@ -194,6 +164,7 @@ const Dashboard = () => {
             </div>
           </div>
 
+          {/* Recent Activity Section */}
           <div className="bg-white shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:px-6">
               <h3 className="text-lg leading-6 font-medium text-gray-900">

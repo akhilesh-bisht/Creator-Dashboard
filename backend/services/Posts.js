@@ -5,7 +5,7 @@ export const getRedditPosts = async () => {
   try {
     // Fetch posts from Reddit (using "new.json" or "hot.json" to get recent posts)
     const response = await axios.get(
-      "https://www.reddit.com/r/javascript/new.json?limit=10" // Increase limit if needed
+      "https://www.reddit.com/r/javascript/new.json?limit=18" // Increase limit if needed
     );
 
     // Log the full response to see the structure
@@ -31,22 +31,44 @@ export const getRedditPosts = async () => {
 };
 
 // Function to get Twitter posts
+
+// Replace in-memory with filesystem cache (server-safe)
+import fs from "fs/promises";
+const CACHE_FILE = "./.twitter_cache.json";
+
 export const getTwitterPosts = async () => {
+  const TWITTER_BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
+
+  if (!TWITTER_BEARER_TOKEN) {
+    throw new Error("Twitter Bearer Token is not set.");
+  }
+
   try {
-    // Fetch posts from Twitter
     const response = await axios.get(
-      "https://api.twitter.com/2/tweets/search/recent?query=javascript",
+      "https://api.twitter.com/2/tweets/search/recent?query=javascript&tweet.fields=created_at,author_id",
       {
         headers: {
-          Authorization: `Bearer ${process.env.TWITTER_BEARER_TOKEN}`,
+          Authorization: `Bearer ${TWITTER_BEARER_TOKEN}`,
         },
       }
     );
-    const tweets = response.data.data;
 
-    console.log("Serving from Twitter API 🛜");
+    const tweets = response.data.data;
+    await fs.writeFile(CACHE_FILE, JSON.stringify(tweets));
+
+    console.log("✅ Served fresh from Twitter API");
     return tweets;
   } catch (error) {
-    throw new Error("Error fetching Twitter posts");
+    if (error.response?.status === 429) {
+      console.warn("⚠️ Rate limit hit. Loading from cache...");
+      try {
+        const cachedData = await fs.readFile(CACHE_FILE, "utf-8");
+        return JSON.parse(cachedData);
+      } catch {
+        throw new Error("Rate limit hit and no cached data available.");
+      }
+    }
+
+    throw new Error("Twitter fetch error");
   }
 };

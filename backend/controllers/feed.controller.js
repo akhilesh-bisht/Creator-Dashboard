@@ -43,6 +43,7 @@ export const saveFeed = async (req, res) => {
         _id: user._id,
         credits: user.credits,
         savedFeeds: user.savedFeeds,
+        postId: postId,
       },
     });
   } catch (error) {

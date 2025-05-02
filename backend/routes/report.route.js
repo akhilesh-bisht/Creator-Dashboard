@@ -9,7 +9,7 @@ import {
 const router = express.Router();
 
 // Route to report a feed
-router.post("/:feedId", reportFeed); // reports a specific feed
+router.post("/", reportFeed); // reports a specific feed
 
 // Route to get all reported feeds
 router.get("/all", getAllReportedFeeds); // get all reported feeds

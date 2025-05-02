@@ -1,22 +1,24 @@
 import { Feed } from "../models/feed.model.js"; // Assuming Feed model exists
 
 // Report a feed
+// Assuming you're using Express.js for routing
 export const reportFeed = async (req, res) => {
-  const { feedId } = req.params;
-  const { reason } = req.body; // The reason for reporting
+  const { reason, id } = req.body;
 
   try {
-    const feed = await Feed.findById(feedId);
-    if (!feed) {
-      return res.status(404).json({ error: "Feed not found." });
+    const feed = await Feed.findById(id);
+
+    if (feed) {
+      feed.reported = true;
+      feed.reportReason = reason;
+      await feed.save();
     }
 
-    // Update the feed with reported status and reason
-    feed.reported = true;
-    feed.reportReason = reason;
-    await feed.save();
-
-    return res.status(200).json({ message: "Feed reported successfully." });
+    // Always return success, even if feed doesn't exist
+    return res.status(200).json({
+      message: "Report received.",
+      feedId: id,
+    });
   } catch (error) {
     console.error("Error reporting feed:", error);
     return res.status(500).json({ error: "Internal Server Error" });

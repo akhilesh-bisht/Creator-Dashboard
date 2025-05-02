@@ -73,8 +73,8 @@ export const getRedditFeed = () => api.get("/api/posts/reddit");
 export const getTwitterFeed = () => api.get("/api/posts/twitter");
 
 // 6- REPORTING
-export const reportFeed = (feedId, reason) =>
-  api.post(`/api/report/${feedId}`, { reason });
+export const reportFeed = (id, reason) =>
+  api.post(`/api/report`, { reason, id });
 export const getAllReportedFeeds = () => api.get("/api/report/all");
 export const deleteReportedFeed = (feedId) =>
   api.delete(`/api/report/delete/${feedId}`);
