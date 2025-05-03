@@ -2,8 +2,10 @@ import axios from "axios";
 
 // Axios instance
 const api = axios.create({
-  // baseURL: "https://creator-dashboard-s7bl.onrender.com",
-  baseURL: "http://localhost:4500",
+  baseURL:
+    process.env.NODE_ENV === "production"
+      ? "https://creator-dashboard-s7bl.onrender.com"
+      : "http://localhost:4500",
   withCredentials: true, // To ensure cookies are sent along with the request
 });
 

@@ -7,11 +7,12 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        // target: "https://creator-dashboard-s7bl.onrender.com",
-        target: "http://localhost:4500",
+        target: isProduction
+          ? "https://creator-dashboard-s7bl.onrender.com"
+          : "http://localhost:4500", // Local URL for development
         changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api/, ""),
+        secure: false, // Useful for HTTP APIs (in dev)
+        rewrite: (path) => path.replace(/^\/api/, ""), // Remove the /api prefix
       },
     },
   },
